@@ -1,4 +1,4 @@
-# # Core Banking API
+# Core Banking API
 
 API de transferências bancárias desenvolvida com **Spring Boot** e **PostgreSQL**, projetada para garantir consistência transacional, rastreabilidade financeira e processamento seguro de operações monetárias.
 
