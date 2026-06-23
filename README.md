@@ -1,5 +1,7 @@
 # Core Banking API
 
+https://benjaminreiis.github.io/core-banking-system/#endpoints
+
 API de transferências bancárias desenvolvida com **Spring Boot** e **PostgreSQL**, projetada para garantir consistência transacional, rastreabilidade financeira e processamento seguro de operações monetárias.
 
 A solução adota práticas utilizadas em sistemas financeiros modernos, incluindo **ACID Transactions**, **Pessimistic Locking**, **Double-Entry Ledger**, **Idempotência** e **Outbox Pattern**.
