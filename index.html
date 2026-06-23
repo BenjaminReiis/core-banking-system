@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Core Banking API — Arquitetura de Transferências</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   CORE BANKING API — style.css
+   Design system: "Ledger Impresso"
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --paper:     #f4f0e6;
+  --paper-2:   #ece5d3;
+  --ink:       #1a2744;
+  --ink-soft:  #3a4566;
+  --ink-faint: #8088a0;
+  --seal:      #a13d2f;
+  --seal-lt:   #c25444;
+  --ok:        #2f6b4f;
+  --line:      rgba(26,39,68,.14);
+  --line-soft: rgba(26,39,68,.08);
+
+  --serif: 'IBM Plex Serif', serif;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --ease: cubic-bezier(.16,1,.3,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.65;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(26,39,68,.025) 28px);
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input{font-family:inherit}
+.container{max-width:1140px;margin:0 auto;padding:0 1.6rem}
+.hidden{display:none!important}
+
+.eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--seal);margin-bottom:.8rem}
+.eyebrow::before{content:'§';font-size:.9rem}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.3rem;border-radius:var(--radius-sm);font-weight:600;font-size:.85rem;transition:all .2s var(--ease)}
+.btn--primary{background:var(--ink);color:var(--paper)}
+.btn--primary:hover{background:var(--ink-soft);transform:translateY(-1px)}
+.btn--ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn--ghost:hover{border-color:var(--seal);color:var(--seal)}
+
+/* ═══ NAV ═══ */
+.nav{position:sticky;top:0;z-index:100;background:rgba(244,240,230,.92);backdrop-filter:blur(10px);border-bottom:1.5px solid var(--ink)}
+.nav__inner{max-width:1140px;margin:0 auto;padding:1rem 1.6rem;display:flex;align-items:center;gap:2.5rem}
+.nav__logo{font-family:var(--serif);font-weight:700;font-size:1.05rem}
+.nav__links{display:flex;gap:1.8rem;margin-left:auto}
+.nav__links a{font-size:.85rem;color:var(--ink-soft);transition:color .2s}
+.nav__links a:hover{color:var(--seal)}
+
+/* ═══ HERO ═══ */
+.hero{padding:4.5rem 0 3.5rem;border-bottom:1.5px solid var(--ink)}
+.hero__inner{max-width:760px;margin:0 auto;padding:0 1.6rem;text-align:left}
+.hero__title{font-family:var(--serif);font-weight:700;font-size:clamp(2.2rem,4.5vw,3.2rem);line-height:1.15;letter-spacing:-.01em;margin-bottom:1.3rem;color:var(--ink)}
+.hero__sub{font-size:1.02rem;color:var(--ink-soft);max-width:620px;margin-bottom:1.8rem;line-height:1.75}
+.hero__stack{display:flex;gap:.6rem;flex-wrap:wrap}
+.stack-pill{font-family:var(--mono);font-size:.72rem;padding:.35rem .85rem;border:1px solid var(--line);border-radius:50px;color:var(--ink-soft)}
+
+/* ═══ SECTIONS ═══ */
+.section{padding:4.5rem 0}
+.section--dark{background:var(--paper-2);border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
+.section__head{margin-bottom:2.2rem}
+.section__title{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,2.8vw,2.1rem);color:var(--ink)}
+.section__intro{color:var(--ink-soft);max-width:640px;margin-bottom:2rem;line-height:1.75}
+
+/* ═══ PROBLEM GRID ═══ */
+.problem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ink);border:1.5px solid var(--ink)}
+.problem-card{background:var(--paper);padding:1.6rem 1.4rem}
+.problem-card__icon{font-size:1.6rem;display:block;margin-bottom:.7rem}
+.problem-card h3{font-family:var(--serif);font-weight:600;font-size:1.02rem;margin-bottom:.6rem}
+.problem-card p{font-size:.85rem;color:var(--ink-soft);line-height:1.6}
+
+/* ═══ PATTERN TABS ═══ */
+.pattern-tabs{display:flex;gap:.5rem;margin-bottom:2rem;flex-wrap:wrap}
+.pattern-tab{
+  font-family:var(--mono);font-size:.8rem;padding:.6rem 1.1rem;border:1.5px solid var(--ink);
+  border-radius:var(--radius-sm);background:var(--paper);color:var(--ink);transition:all .2s;
+}
+.pattern-tab.active{background:var(--ink);color:var(--paper)}
+
+.pattern-detail{background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--radius);padding:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.pattern-detail__name{font-family:var(--serif);font-weight:700;font-size:1.4rem;margin-bottom:.8rem;color:var(--seal)}
+.pattern-detail__problem{font-size:.85rem;color:var(--ink-faint);margin-bottom:1rem;font-style:italic}
+.pattern-detail__desc{font-size:.92rem;color:var(--ink-soft);line-height:1.75;margin-bottom:1.2rem}
+.pattern-detail__code{background:var(--ink);color:#e8e4d8;font-family:var(--mono);font-size:.78rem;padding:1.2rem;border-radius:var(--radius-sm);overflow-x:auto;white-space:pre;line-height:1.7}
+.pattern-detail__visual{display:flex;align-items:center;justify-content:center}
+
+/* ═══ SIMULATOR ═══ */
+.sim-grid{display:flex;flex-direction:column;gap:1.5rem}
+.sim-accounts{display:flex;align-items:center;gap:1.5rem;justify-content:center;flex-wrap:wrap}
+.account-card{background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--radius);padding:1.3rem 1.6rem;min-width:200px;text-align:center;transition:border-color .3s,box-shadow .3s}
+.account-card.flash-debit{box-shadow:0 0 0 3px rgba(161,61,47,.25)}
+.account-card.flash-credit{box-shadow:0 0 0 3px rgba(47,107,79,.25)}
+.account-card__label{display:block;font-family:var(--mono);font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
+.account-card__id{display:block;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-bottom:.6rem}
+.account-card__balance{display:block;font-family:var(--mono);font-weight:700;font-size:1.5rem;color:var(--ink);transition:color .3s}
+.sim-arrow{font-size:1.6rem;color:var(--ink-faint)}
+
+.sim-controls{display:flex;flex-direction:column;gap:.6rem;max-width:480px;margin:0 auto}
+.sim-controls label{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);font-weight:600}
+.sim-controls input{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:.6rem .8rem;font-family:var(--mono);font-size:.95rem;color:var(--ink);outline:none}
+.sim-controls input:focus{border-color:var(--seal)}
+.sim-buttons{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem}
+
+.sim-log{background:var(--ink);color:#e8e4d8;border-radius:var(--radius);padding:1.4rem;font-family:var(--mono);font-size:.82rem;min-height:200px;max-height:380px;overflow-y:auto;line-height:1.8}
+.sim-log__empty{color:#6b7390;text-align:center;padding:2rem 0}
+.sim-log-line{margin-bottom:.4rem;animation:logFade .3s ease both}
+@keyframes logFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.sim-log-line--ok{color:#7fd9a8}
+.sim-log-line--warn{color:#f0c674}
+.sim-log-line--error{color:#ef8a7e}
+.sim-log-line--step{color:#9fb0e0}
+.sim-log-line__time{color:#5a6280;margin-right:.6rem}
+
+/* ═══ SCHEMA DIAGRAM ═══ */
+.schema-diagram{display:flex;flex-direction:column;gap:1.2rem}
+.schema-table{background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--radius);overflow:hidden}
+.schema-table__head{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:.82rem;font-weight:600;padding:.7rem 1.2rem}
+.schema-row{display:grid;grid-template-columns:180px 110px 1fr;gap:1rem;padding:.55rem 1.2rem;border-bottom:1px solid var(--line-soft);font-size:.82rem}
+.schema-row:last-child{border-bottom:none}
+.schema-row__field{font-family:var(--mono);font-weight:600;color:var(--ink)}
+.schema-row__type{font-family:var(--mono);color:var(--seal)}
+.schema-row__desc{color:var(--ink-soft)}
+
+/* ═══ ENDPOINTS ═══ */
+.endpoint-list{display:flex;flex-direction:column;gap:.9rem}
+.endpoint-row{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.2rem;background:var(--paper-2);border:1.5px solid var(--line);border-radius:var(--radius-sm)}
+.endpoint-method{font-family:var(--mono);font-weight:700;font-size:.78rem;padding:.3rem .7rem;border-radius:4px;flex-shrink:0;min-width:58px;text-align:center}
+.endpoint-method--POST{background:rgba(47,107,79,.15);color:var(--ok)}
+.endpoint-method--GET{background:rgba(26,39,68,.1);color:var(--ink-soft)}
+.endpoint-method--PATCH{background:rgba(161,61,47,.12);color:var(--seal)}
+.endpoint-body{flex:1}
+.endpoint-path{font-family:var(--mono);font-size:.88rem;font-weight:600;color:var(--ink)}
+.endpoint-desc{font-size:.82rem;color:var(--ink-soft);margin-top:.3rem}
+
+/* ═══ FOOTER ═══ */
+.footer{padding:2.2rem 0;border-top:1.5px solid var(--ink);text-align:center}
+.footer__logo{font-family:var(--serif);font-weight:700;margin-bottom:.6rem}
+.footer__note{font-size:.8rem;color:var(--ink-soft);margin-bottom:.3rem;max-width:560px;margin-left:auto;margin-right:auto}
+.footer__copy{font-size:.74rem;color:var(--ink-faint)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px){
+  .nav__links{display:none}
+  .problem-grid{grid-template-columns:repeat(2,1fr)}
+  .pattern-detail{grid-template-columns:1fr}
+  .schema-row{grid-template-columns:1fr;gap:.2rem}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav__inner">
+    <div class="nav__logo">§ Core Banking API</div>
+    <nav class="nav__links">
+      <a href="#overview">Visão geral</a>
+      <a href="#patterns">Padrões</a>
+      <a href="#simulator">Simulador</a>
+      <a href="#schema">Schema</a>
+      <a href="#endpoints">Endpoints</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="hero__inner">
+    <span class="eyebrow">Documentação técnica · visualização interativa</span>
+    <h1 class="hero__title">Como transferir dinheiro<br/>sem perder um centavo.</h1>
+    <p class="hero__sub">Uma API de transferências bancárias precisa garantir que o dinheiro nunca desapareça, nunca duplique e nunca fique em estado inconsistente — mesmo quando duas requisições chegam ao mesmo tempo, ou quando o servidor cai no meio de uma operação. Esta página mostra exatamente como isso é resolvido, padrão por padrão.</p>
+    <div class="hero__stack">
+      <span class="stack-pill">Spring Boot 3</span>
+      <span class="stack-pill">PostgreSQL 15</span>
+      <span class="stack-pill">JPA / Hibernate</span>
+      <span class="stack-pill">ACID Transactions</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<section class="section" id="overview">
+  <div class="container">
+    <div class="section__head">
+      <span class="eyebrow">O problema central</span>
+      <h2 class="section__title">Transferir dinheiro é mais difícil do que parece</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <span class="problem-card__icon">⚡</span>
+        <h3>Concorrência</h3>
+        <p>Duas transferências da mesma conta, ao mesmo tempo. Sem controle, ambas podem ler o saldo antes de qualquer uma debitar — e o saldo final fica errado.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card__icon">🔁</span>
+        <h3>Duplicação</h3>
+        <p>O cliente não recebeu resposta a tempo e reenvia a mesma transferência. Sem proteção, o dinheiro é debitado duas vezes.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card__icon">💥</span>
+        <h3>Falha no meio do caminho</h3>
+        <p>O servidor cai depois de debitar a conta de origem, mas antes de creditar o destino. O dinheiro simplesmente desaparece.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card__icon">📒</span>
+        <h3>Auditoria</h3>
+        <p>Um auditor pergunta: "para onde foi cada centavo nos últimos 90 dias?" — a resposta precisa existir, completa e imutável.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PATTERNS ═══════════════ -->
+<section class="section section--dark" id="patterns">
+  <div class="container">
+    <div class="section__head">
+      <span class="eyebrow">As cinco garantias</span>
+      <h2 class="section__title">Os padrões que resolvem cada problema</h2>
+    </div>
+
+    <div class="pattern-tabs" id="pattern-tabs"></div>
+    <div class="pattern-detail" id="pattern-detail"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ SIMULATOR ═══════════════ -->
+<section class="section" id="simulator">
+  <div class="container">
+    <div class="section__head">
+      <span class="eyebrow">Veja funcionando</span>
+      <h2 class="section__title">Simulador de transferência</h2>
+    </div>
+    <p class="section__intro">Dispare uma transferência e acompanhe, passo a passo, exatamente o que acontece dentro da API — incluindo o que aconteceria se você clicasse duas vezes.</p>
+
+    <div class="sim-grid">
+      <div class="sim-accounts">
+        <div class="account-card" id="account-origin">
+          <span class="account-card__label">Conta de origem</span>
+          <span class="account-card__id">acc_8821</span>
+          <span class="account-card__balance" id="balance-origin">R$ 5.000,00</span>
+        </div>
+        <div class="sim-arrow">→</div>
+        <div class="account-card" id="account-dest">
+          <span class="account-card__label">Conta de destino</span>
+          <span class="account-card__id">acc_4417</span>
+          <span class="account-card__balance" id="balance-dest">R$ 1.200,00</span>
+        </div>
+      </div>
+
+      <div class="sim-controls">
+        <label>Valor da transferência (R$)</label>
+        <input type="number" id="sim-amount" value="350.00" step="0.01" min="0.01"/>
+        <div class="sim-buttons">
+          <button class="btn btn--primary" id="btn-simulate">Transferir</button>
+          <button class="btn btn--ghost" id="btn-simulate-duplicate" title="Simula clicar duas vezes / reenviar a mesma requisição">Transferir + reenviar (testar idempotência)</button>
+          <button class="btn btn--ghost" id="btn-simulate-crash" title="Simula uma falha do servidor no meio da operação">Transferir + falha no meio (testar Outbox)</button>
+        </div>
+      </div>
+
+      <div class="sim-log" id="sim-log">
+        <div class="sim-log__empty">Clique em "Transferir" para ver o passo a passo da transação.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SCHEMA ═══════════════ -->
+<section class="section section--dark" id="schema">
+  <div class="container">
+    <div class="section__head">
+      <span class="eyebrow">Modelo de dados</span>
+      <h2 class="section__title">Como o ledger de dupla entrada é armazenado</h2>
+    </div>
+    <div class="schema-diagram" id="schema-diagram"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ ENDPOINTS ═══════════════ -->
+<section class="section" id="endpoints">
+  <div class="container">
+    <div class="section__head">
+      <span class="eyebrow">Referência da API</span>
+      <h2 class="section__title">Endpoints principais</h2>
+    </div>
+    <div class="endpoint-list" id="endpoint-list"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__logo">§ Core Banking API</div>
+    <p class="footer__note">Documentação visual e interativa. O simulador de transferência roda inteiramente no navegador — nenhuma chamada é feita a um banco de dados ou servidor real.</p>
+    <p class="footer__copy">© 2025 — projeto conceitual de arquitetura financeira</p>
+  </div>
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CORE BANKING API — data.js
+//  Conteúdo técnico: padrões, schema, endpoints
+// ════════════════════════════════════════════════════
+
+const PATTERNS = [
+  {
+    id: "acid",
+    name: "ACID Transactions",
+    problem: "Resolve: inconsistência se algo falhar no meio da operação",
+    desc: "Toda transferência roda dentro de uma transação de banco de dados. Debitar a origem e creditar o destino são tratados como uma única operação atômica: ou as duas etapas são confirmadas juntas (commit), ou nenhuma delas é (rollback). Não existe estado intermediário visível para fora.",
+    code: "@Transactional\npublic Transfer execute(TransferRequest req) {\n    Account origin = accountRepo.findById(req.originId());\n    Account dest = accountRepo.findById(req.destId());\n\n    origin.debit(req.amount());\n    dest.credit(req.amount());\n\n    accountRepo.save(origin);\n    accountRepo.save(dest);\n\n    // Se qualquer linha acima lancar\n    // excecao, o Spring desfaz TUDO.\n    return transferRepo.save(\n        Transfer.completed(req));\n}",
+  },
+  {
+    id: "locking",
+    name: "Pessimistic Locking",
+    problem: "Resolve: duas transferências simultâneas da mesma conta",
+    desc: "Quando a transação busca a conta de origem, ela trava aquela linha no banco de dados (SELECT ... FOR UPDATE). Qualquer outra transação que tente ler a mesma conta precisa esperar a primeira terminar. Isso impede que duas transferências leiam o mesmo saldo \"antigo\" e ambas decidam que há saldo suficiente.",
+    code: "@Lock(LockModeType.PESSIMISTIC_WRITE)\n@Query(\"SELECT a FROM Account a WHERE a.id = :id\")\nAccount findByIdForUpdate(@Param(\"id\") UUID id);\n\n// A segunda transferencia simultanea\n// para a mesma conta FICA BLOQUEADA\n// aqui ate a primeira terminar -\n// nunca le um saldo desatualizado.",
+  },
+  {
+    id: "ledger",
+    name: "Double-Entry Ledger",
+    problem: "Resolve: auditoria — saber para onde foi cada centavo",
+    desc: "Em vez de só atualizar um campo \"saldo\" em cada conta, toda movimentação gera duas entradas imutáveis no livro-razão: um débito e um crédito, sempre com o mesmo valor. O saldo de uma conta nunca é editado diretamente — ele é a SOMA de todas as entradas do ledger. Isso é como contabilidade funciona há séculos, e torna fraude ou erro matematicamente detectável.",
+    code: "-- Uma transferencia de R$ 350 gera\n-- DUAS linhas no ledger, nunca uma:\n\nINSERT INTO ledger_entries\n  (account_id, type, amount, ref)\nVALUES\n  ('acc_8821', 'DEBIT',  350.00, 'trf_91a'),\n  ('acc_4417', 'CREDIT', 350.00, 'trf_91a');\n\n-- Saldo de uma conta = soma de\n-- todas as entradas. Nunca um\n-- UPDATE direto em \"balance\".",
+  },
+  {
+    id: "idempotency",
+    name: "Idempotência",
+    problem: "Resolve: o cliente reenviar a mesma transferência por engano",
+    desc: "Toda requisição de transferência exige uma Idempotency-Key única, gerada pelo cliente. A API guarda essa chave junto com o resultado da primeira execução. Se a mesma chave chegar de novo — porque o cliente clicou duas vezes, ou a conexão caiu e o app tentou de novo — a API devolve o resultado já salvo, sem executar a transferência uma segunda vez.",
+    code: "POST /v1/transfers\nIdempotency-Key: 7f3a-91c2-...\n\nif (idempotencyRepo.existsByKey(key)) {\n    // ja processamos essa exata\n    // requisicao antes - devolve o\n    // mesmo resultado, nao duplica\n    return idempotencyRepo\n        .getCachedResponse(key);\n}\n// primeira vez: processa\n// normalmente e salva a chave",
+  },
+  {
+    id: "outbox",
+    name: "Outbox Pattern",
+    problem: "Resolve: o servidor cair entre salvar a transação e notificar outros sistemas",
+    desc: "Depois de uma transferência, o sistema geralmente precisa avisar outros serviços (notificação, antifraude, etc). Em vez de chamar esses serviços diretamente — o que pode falhar e deixar tudo inconsistente — o evento é salvo numa tabela \"outbox\" DENTRO da mesma transação do banco. Um processo separado lê essa tabela e entrega os eventos de forma confiável, mesmo que o servidor caia exatamente depois do commit.",
+    code: "@Transactional\npublic void execute(TransferRequest req) {\n    transferRepo.save(transfer);\n\n    // Evento salvo na MESMA\n    // transacao - atomico com\n    // a transferencia em si:\n    outboxRepo.save(new OutboxEvent(\n        \"TransferCompleted\",\n        transfer.toJson()));\n}\n// Um worker separado le a tabela\n// outbox e entrega os eventos -\n// nunca se perdem, mesmo se a API\n// cair logo apos o commit.",
+  },
+];
+
+const SCHEMA_TABLES = [
+  {
+    name: "accounts",
+    fields: [
+      { field: "id", type: "UUID (PK)", desc: "Identificador único da conta" },
+      { field: "owner_name", type: "VARCHAR", desc: "Nome do titular" },
+      { field: "currency", type: "VARCHAR(3)", desc: "Moeda (ex: BRL)" },
+      { field: "version", type: "BIGINT", desc: "Controle de concorrência otimista (lock adicional)" },
+      { field: "created_at", type: "TIMESTAMP", desc: "Data de criação da conta" },
+    ],
+  },
+  {
+    name: "ledger_entries",
+    fields: [
+      { field: "id", type: "UUID (PK)", desc: "Identificador único da entrada" },
+      { field: "account_id", type: "UUID (FK)", desc: "Conta afetada por esta entrada" },
+      { field: "type", type: "ENUM", desc: "DEBIT ou CREDIT — nunca ambos na mesma linha" },
+      { field: "amount", type: "DECIMAL(19,4)", desc: "Valor da movimentação, sempre positivo" },
+      { field: "transfer_id", type: "UUID (FK)", desc: "Referência à transferência que originou esta entrada" },
+      { field: "created_at", type: "TIMESTAMP", desc: "Imutável — nunca é alterada após criada" },
+    ],
+  },
+  {
+    name: "transfers",
+    fields: [
+      { field: "id", type: "UUID (PK)", desc: "Identificador único da transferência" },
+      { field: "origin_account_id", type: "UUID (FK)", desc: "Conta de origem" },
+      { field: "dest_account_id", type: "UUID (FK)", desc: "Conta de destino" },
+      { field: "amount", type: "DECIMAL(19,4)", desc: "Valor transferido" },
+      { field: "status", type: "ENUM", desc: "PENDING, COMPLETED, FAILED" },
+      { field: "idempotency_key", type: "VARCHAR (UNIQUE)", desc: "Chave usada para evitar duplicação" },
+    ],
+  },
+  {
+    name: "outbox_events",
+    fields: [
+      { field: "id", type: "UUID (PK)", desc: "Identificador único do evento" },
+      { field: "event_type", type: "VARCHAR", desc: "Ex: TransferCompleted, TransferFailed" },
+      { field: "payload", type: "JSONB", desc: "Dados do evento serializados" },
+      { field: "published", type: "BOOLEAN", desc: "Se o worker já entregou este evento" },
+      { field: "created_at", type: "TIMESTAMP", desc: "Usado para processar eventos em ordem" },
+    ],
+  },
+];
+
+const ENDPOINTS = [
+  { method: "POST", path: "/v1/accounts", desc: "Cria uma nova conta bancária com saldo inicial zero." },
+  { method: "GET", path: "/v1/accounts/{id}", desc: "Consulta os dados de uma conta, incluindo saldo calculado a partir do ledger." },
+  { method: "GET", path: "/v1/accounts/{id}/ledger", desc: "Lista todas as entradas do livro-razão daquela conta, paginado." },
+  { method: "POST", path: "/v1/transfers", desc: "Cria uma nova transferência. Requer header Idempotency-Key." },
+  { method: "GET", path: "/v1/transfers/{id}", desc: "Consulta o status atual de uma transferência específica." },
+  { method: "PATCH", path: "/v1/transfers/{id}/reverse", desc: "Reverte uma transferência completada, gerando novas entradas de ledger em sentido contrário." },
+];
+// ════════════════════════════════════════════════════
+//  CORE BANKING API — simulator.js
+//  Simulador visual do fluxo de transferência
+// ════════════════════════════════════════════════════
+
+const Simulator = {
+  balances: { origin: 5000.00, dest: 1200.00 },
+  processedKeys: new Set(),
+  logEl: null,
+
+  init() {
+    this.logEl = document.getElementById("sim-log");
+    this.updateBalanceDisplay();
+  },
+
+  updateBalanceDisplay() {
+    document.getElementById("balance-origin").textContent = formatBRL(this.balances.origin);
+    document.getElementById("balance-dest").textContent = formatBRL(this.balances.dest);
+  },
+
+  clearLog() {
+    this.logEl.innerHTML = "";
+  },
+
+  logLine(text, type, delay) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const line = document.createElement("div");
+        line.className = "sim-log-line sim-log-line--" + (type || "step");
+        const time = new Date().toTimeString().slice(0, 8);
+        line.innerHTML = `<span class="sim-log-line__time">${time}</span>${text}`;
+        this.logEl.appendChild(line);
+        this.logEl.scrollTop = this.logEl.scrollHeight;
+        resolve();
+      }, delay || 0);
+    });
+  },
+
+  flashAccount(which, kind) {
+    const el = document.getElementById(which === "origin" ? "account-origin" : "account-dest");
+    el.classList.add(kind === "debit" ? "flash-debit" : "flash-credit");
+    setTimeout(() => el.classList.remove(kind === "debit" ? "flash-debit" : "flash-credit"), 700);
+  },
+
+  async runTransfer(amount, idempotencyKey, opts) {
+    opts = opts || {};
+    const isDuplicate = this.processedKeys.has(idempotencyKey);
+
+    if (isDuplicate) {
+      await this.logLine(`<strong>POST /v1/transfers</strong> — Idempotency-Key: <span style="color:#f0c674">${idempotencyKey}</span>`, "step", 0);
+      await this.logLine(`Verificando chave de idempotência no banco...`, "step", 500);
+      await this.logLine(`⚠ Chave já processada anteriormente. Nenhuma nova transferência será criada.`, "warn", 700);
+      await this.logLine(`↩ Retornando o mesmo resultado da primeira execução (HTTP 200, idempotent replay).`, "ok", 600);
+      await this.logLine(`✓ Saldo permanece inalterado — a duplicação foi bloqueada com sucesso.`, "ok", 500);
+      return;
+    }
+
+    if (amount > this.balances.origin) {
+      await this.logLine(`<strong>POST /v1/transfers</strong> — valor: ${formatBRL(amount)}`, "step", 0);
+      await this.logLine(`Adquirindo lock pessimista na conta de origem (acc_8821)...`, "step", 500);
+      await this.logLine(`✗ Saldo insuficiente. Transação revertida (ROLLBACK).`, "error", 600);
+      return;
+    }
+
+    await this.logLine(`<strong>POST /v1/transfers</strong> — Idempotency-Key: <span style="color:#f0c674">${idempotencyKey}</span>`, "step", 0);
+    await this.logLine(`Verificando chave de idempotência... não encontrada, seguindo com a execução.`, "step", 450);
+    await this.logLine(`@Transactional — iniciando transação no PostgreSQL (BEGIN).`, "step", 500);
+    await this.logLine(`SELECT * FROM accounts WHERE id = 'acc_8821' FOR UPDATE — <span style="color:#f0c674">lock pessimista adquirido</span>.`, "step", 600);
+
+    this.flashAccount("origin", "debit");
+    await this.logLine(`Debitando ${formatBRL(amount)} da conta de origem.`, "step", 500);
+    this.balances.origin -= amount;
+    this.updateBalanceDisplay();
+
+    if (opts.crashMidway) {
+      await this.logLine(`INSERT INTO ledger_entries (acc_8821, DEBIT, ${amount.toFixed(2)})`, "step", 500);
+      await this.logLine(`💥 Simulando falha do servidor AQUI — antes do commit.`, "error", 700);
+      await this.logLine(`PostgreSQL detecta a conexão perdida → ROLLBACK automático da transação inteira.`, "warn", 700);
+      this.balances.origin += amount; // rollback restores balance
+      this.updateBalanceDisplay();
+      await this.logLine(`✓ Graças ao ACID, a conta de origem volta ao saldo original. Nenhum dinheiro foi perdido.`, "ok", 600);
+      await this.logLine(`Cliente pode tentar novamente com a MESMA Idempotency-Key, com segurança.`, "ok", 500);
+      return;
+    }
+
+    this.flashAccount("dest", "credit");
+    await this.logLine(`SELECT * FROM accounts WHERE id = 'acc_4417' FOR UPDATE — lock pessimista adquirido.`, "step", 500);
+    await this.logLine(`Creditando ${formatBRL(amount)} na conta de destino.`, "step", 500);
+    this.balances.dest += amount;
+    this.updateBalanceDisplay();
+
+    await this.logLine(`INSERT INTO ledger_entries: <span style="color:#9fb0e0">(acc_8821, DEBIT, ${amount.toFixed(2)})</span>, <span style="color:#9fb0e0">(acc_4417, CREDIT, ${amount.toFixed(2)})</span>`, "step", 500);
+    await this.logLine(`INSERT INTO outbox_events (TransferCompleted, payload) — <span style="color:#f0c674">na mesma transação</span>.`, "step", 500);
+    await this.logLine(`COMMIT — transação confirmada. Locks liberados.`, "step", 500);
+    await this.logLine(`✓ Transferência concluída com sucesso. Evento na outbox será publicado pelo worker assíncrono.`, "ok", 600);
+
+    this.processedKeys.add(idempotencyKey);
+  },
+};
+
+function formatBRL(value) {
+  return "R$ " + value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function generateIdempotencyKey() {
+  return "idem_" + Math.random().toString(36).slice(2, 10);
+}
+// ════════════════════════════════════════════════════
+//  CORE BANKING API — app.js
+//  Orquestração principal
+// ════════════════════════════════════════════════════
+
+let currentPatternId = PATTERNS[0].id;
+let lastIdempotencyKey = null;
+let simulationRunning = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  Simulator.init();
+  initPatternTabs();
+  initSimulatorControls();
+  initSchemaDiagram();
+  initEndpointList();
+});
+
+// ════════════════════════════════════════════════════
+//  PATTERN TABS
+// ════════════════════════════════════════════════════
+function initPatternTabs() {
+  const tabsEl = document.getElementById("pattern-tabs");
+  tabsEl.innerHTML = PATTERNS.map(p => `
+    <button class="pattern-tab ${p.id === currentPatternId ? 'active' : ''}" data-id="${p.id}">${p.name}</button>
+  `).join("");
+
+  tabsEl.querySelectorAll(".pattern-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabsEl.querySelectorAll(".pattern-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      currentPatternId = tab.dataset.id;
+      renderPatternDetail();
+    });
+  });
+
+  renderPatternDetail();
+}
+
+function renderPatternDetail() {
+  const pattern = PATTERNS.find(p => p.id === currentPatternId);
+  const el = document.getElementById("pattern-detail");
+  el.innerHTML = `
+    <div class="pattern-detail__text">
+      <div class="pattern-detail__name">${escapeHtml(pattern.name)}</div>
+      <div class="pattern-detail__problem">${escapeHtml(pattern.problem)}</div>
+      <p class="pattern-detail__desc">${escapeHtml(pattern.desc)}</p>
+    </div>
+    <pre class="pattern-detail__code">${escapeHtml(pattern.code)}</pre>
+  `;
+}
+
+// ════════════════════════════════════════════════════
+//  SIMULATOR CONTROLS
+// ════════════════════════════════════════════════════
+function initSimulatorControls() {
+  document.getElementById("btn-simulate").addEventListener("click", async () => {
+    if (simulationRunning) return;
+    const amount = getSimAmount();
+    if (amount === null) return;
+    simulationRunning = true;
+    Simulator.clearLog();
+    lastIdempotencyKey = generateIdempotencyKey();
+    await Simulator.runTransfer(amount, lastIdempotencyKey);
+    simulationRunning = false;
+  });
+
+  document.getElementById("btn-simulate-duplicate").addEventListener("click", async () => {
+    if (simulationRunning) return;
+    const amount = getSimAmount();
+    if (amount === null) return;
+    simulationRunning = true;
+    Simulator.clearLog();
+    const key = generateIdempotencyKey();
+    await Simulator.runTransfer(amount, key);
+    await Simulator.logLine("— cliente reenvia a mesma requisição (ex: clique duplo, timeout) —", "warn", 600);
+    await Simulator.runTransfer(amount, key); // same key = duplicate path
+    simulationRunning = false;
+  });
+
+  document.getElementById("btn-simulate-crash").addEventListener("click", async () => {
+    if (simulationRunning) return;
+    const amount = getSimAmount();
+    if (amount === null) return;
+    simulationRunning = true;
+    Simulator.clearLog();
+    const key = generateIdempotencyKey();
+    await Simulator.runTransfer(amount, key, { crashMidway: true });
+    simulationRunning = false;
+  });
+}
+
+function getSimAmount() {
+  const input = document.getElementById("sim-amount");
+  const amount = parseFloat(input.value);
+  if (isNaN(amount) || amount <= 0) {
+    input.focus();
+    return null;
+  }
+  return amount;
+}
+
+// ════════════════════════════════════════════════════
+//  SCHEMA DIAGRAM
+// ════════════════════════════════════════════════════
+function initSchemaDiagram() {
+  const el = document.getElementById("schema-diagram");
+  el.innerHTML = SCHEMA_TABLES.map(table => `
+    <div class="schema-table">
+      <div class="schema-table__head">${escapeHtml(table.name)}</div>
+      ${table.fields.map(f => `
+        <div class="schema-row">
+          <span class="schema-row__field">${escapeHtml(f.field)}</span>
+          <span class="schema-row__type">${escapeHtml(f.type)}</span>
+          <span class="schema-row__desc">${escapeHtml(f.desc)}</span>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+}
+
+// ════════════════════════════════════════════════════
+//  ENDPOINT LIST
+// ════════════════════════════════════════════════════
+function initEndpointList() {
+  const el = document.getElementById("endpoint-list");
+  el.innerHTML = ENDPOINTS.map(ep => `
+    <div class="endpoint-row">
+      <span class="endpoint-method endpoint-method--${ep.method}">${ep.method}</span>
+      <div class="endpoint-body">
+        <div class="endpoint-path">${escapeHtml(ep.path)}</div>
+        <div class="endpoint-desc">${escapeHtml(ep.desc)}</div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
