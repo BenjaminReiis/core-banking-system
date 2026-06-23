@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/corebanking
+    username: corebanking
+    password: corebanking
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+  cassandra:
+    contact-points: localhost
+    port: 9042
+    keyspace-name: corebanking
+    local-datacenter: datacenter1
+    schema-action: create_if_not_exists
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: "my-dev-secret-my-dev-secret-my-dev-secret"
+
+logging:
+  level:
+    org.hibernate.SQL: INFO
